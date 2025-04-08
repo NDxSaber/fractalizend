@@ -113,7 +113,7 @@ export default function Screener() {
               <div className={styles.timeframeContainer}>
                 {Object.entries(pair.directionTimeframe || {}).map(([timeframe, direction]) => (
                   <div key={timeframe} className={styles.timeframeItem}>
-                    <span className={styles.timeframeLabel}>{timeframe}</span>
+                    <span className={styles.timeframeLabel}>{getTimeframeName(timeframe)}</span>
                     <div className={getIndicatorClass(direction)} title={`${timeframe}: ${direction}`} />
                   </div>
                 ))}
@@ -128,4 +128,17 @@ export default function Screener() {
       )}
     </div>
   );
-} 
+};
+
+const getTimeframeName = (timeframe: string) => {
+  if (timeframe === "1") return '1m';
+  if (timeframe === "5") return '5m';
+  if (timeframe === "15") return '15m';
+  if (timeframe === "30") return '30m';
+  if (timeframe === "60") return '1H';
+  if (timeframe === "240") return '4H';
+  if (timeframe === "D") return '1D';
+  if (timeframe === "W") return '1W';
+  if (timeframe === "M") return '1M';
+  return timeframe;
+};

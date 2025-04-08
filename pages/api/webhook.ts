@@ -103,9 +103,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
       console.log('📝 New history entry:', newHistoryEntry);
 
+      // Get current history and limit to 100 entries
+      const currentHistory = currentData.history || [];
+      const updatedHistory = [newHistoryEntry, ...currentHistory].slice(0, 100);
+      console.log('📊 Updated history length:', updatedHistory.length);
+
       await updateDoc(pairRef, {
         directionTimeframe: updatedDirectionTimeframe,
-        history: arrayUnion(newHistoryEntry)
+        history: updatedHistory
       });
       console.log('✅ Updated pair document for', pair);
     }
