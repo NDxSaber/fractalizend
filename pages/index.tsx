@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, limit } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, limit, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { PairScreenerData } from '../types/pairScreener';
 
@@ -54,12 +54,21 @@ const mockData = [
   }
 ];
 
+interface PairTimeframeStatus {
+  pair: string;
+  timeframes: {
+    [key: string]: string; // timeframe: status
+  };
+  lastUpdated: Date;
+}
+
 export default function Home() {
   const [alerts, setAlerts] = useState<PairScreenerData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [addingMockData, setAddingMockData] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [pairs, setPairs] = useState<PairTimeframeStatus[]>([]);
 
   useEffect(() => {
     console.log('Setting up Firestore listener...');
@@ -104,6 +113,36 @@ export default function Home() {
       setError('Failed to set up alert listener.');
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    const fetchPairs = async () => {
+      try {
+        const pairsRef = collection(db, 'pairScreener', 'pairs');
+        const pairsSnapshot = await getDocs(pairsRef);
+        
+        const pairPromises = pairsSnapshot.docs.map(async (pairDoc) => {
+          const infoDoc = await getDocs(collection(pairsRef, pairDoc.id, 'info'));
+          const infoData = infoDoc.docs[0]?.data() || {};
+          
+          return {
+            pair: pairDoc.id,
+            timeframes: Object.fromEntries(
+              Object.entries(infoData).filter(([key]) => key !== 'lastUpdated')
+            ),
+            lastUpdated: infoData.lastUpdated?.toDate() || new Date()
+          };
+        });
+
+        const pairsData = await Promise.all(pairPromises);
+        setPairs(pairsData);
+      } catch (error) {
+        console.error('Error fetching pairs:', error);
+        setError('Error fetching pairs');
+      }
+    };
+
+    fetchPairs();
   }, []);
 
   const addMockData = async () => {
@@ -158,113 +197,100 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Pair Screener Alerts History</h1>
-          <button
-            onClick={addMockData}
-            disabled={addingMockData}
-            className={`px-6 py-3 rounded-lg ${
-              addingMockData
-                ? 'bg-gray-300 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700 transition-colors duration-200'
-            } text-white font-medium shadow-sm`}
-          >
-            {addingMockData ? 'Adding Mock Data...' : 'Add Mock Data'}
-          </button>
-          <button
-            onClick={handleDeleteAll}
-            disabled={deleting || alerts.length === 0}
-            className={`px-4 py-2 rounded-md text-white ${
-              deleting || alerts.length === 0
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-red-600 hover:bg-red-700'
-            }`}
-          >
-            {deleting ? 'Deleting...' : 'Delete All Alerts'}
-          </button>
-        </div>
-        
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-            {error}
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-4">FractalizeND Screener</h1>
+      
+      {/* Search and Controls */}
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Search pairs..."
+          className="p-2 border rounded mr-4"
+        />
+        <label className="inline-flex items-center">
+          <span className="mr-2">Swing is</span>
+          <div className="relative inline-block w-12 h-6 rounded-full bg-gray-300">
+            <div className="absolute left-1 top-1 w-4 h-4 rounded-full bg-white"></div>
           </div>
-        )}
+          <span className="ml-2">OFF</span>
+        </label>
+      </div>
 
-        <div className="mb-6 text-sm text-gray-500 bg-white p-4 rounded-lg shadow-sm">
-          Showing {alerts.length} latest alerts (max 100)
-        </div>
-        
-        {alerts.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center border border-gray-100">
-            <p className="text-gray-500 text-lg">No alerts found in the history.</p>
+      {/* Pairs Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        {pairs.map((pair) => (
+          <div key={pair.pair} className="border rounded-lg p-4 shadow">
+            <h2 className="text-xl font-bold mb-4">{pair.pair}</h2>
+            
+            {/* Structure, MA, Can indicators */}
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              <div>
+                <div className="text-sm">Val:</div>
+                <div className="h-2 bg-gray-300 rounded"></div>
+                <div className="text-sm mt-1">Con:</div>
+                <div className="h-2 bg-gray-300 rounded"></div>
+              </div>
+              <div>
+                <div className="text-sm">Structure</div>
+                <div className="h-2 bg-gray-300 rounded"></div>
+                <div className="h-2 bg-gray-300 rounded mt-4"></div>
+              </div>
+              <div>
+                <div className="text-sm">MA</div>
+                <div className="h-2 bg-gray-300 rounded"></div>
+                <div className="h-2 bg-gray-300 rounded mt-4"></div>
+              </div>
+            </div>
+
+            {/* Timeframes Grid */}
+            <div className="grid grid-cols-3 gap-2">
+              {Object.entries(pair.timeframes).map(([timeframe, status]) => (
+                <div key={timeframe} className="text-sm">
+                  <span className="font-medium">{timeframe}:</span>
+                  <div 
+                    className={`h-2 rounded mt-1 ${
+                      status === 'Bullish' ? 'bg-green-500' : 
+                      status === 'Bearish' ? 'bg-red-500' : 
+                      'bg-gray-300'
+                    }`}
+                  ></div>
+                </div>
+              ))}
+            </div>
           </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-8 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Time
-                  </th>
-                  <th scope="col" className="px-8 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Pair
-                  </th>
-                  <th scope="col" className="px-8 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Timeframe
-                  </th>
-                  <th scope="col" className="px-8 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th scope="col" className="px-8 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Data
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
-                {alerts.map((alert) => (
-                  <tr key={alert.id} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className="px-8 py-5 whitespace-nowrap text-sm text-gray-600">
-                      {alert.receivedAt?.toDate().toLocaleString()}
-                    </td>
-                    <td className="px-8 py-5 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{alert.pair}</div>
-                    </td>
-                    <td className="px-8 py-5 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{alert.timeframe}</div>
-                    </td>
-                    <td className="px-8 py-5 whitespace-nowrap text-sm text-gray-900 font-medium">
-                      {alert.price.toLocaleString()}
-                    </td>
-                    <td className="px-8 py-5">
-                      <div className="text-sm text-gray-600">
-                        <div className="grid grid-cols-2 gap-2">
-                          {Object.entries(alert.data || {}).map(([key, value]) => (
-                            <div key={key} className="flex items-center space-x-2">
-                              <span className="font-medium text-gray-500">{key}:</span>
-                              <span className={`${
-                                typeof value === 'number' 
-                                  ? 'text-blue-600 font-medium'
-                                  : value === 'up' 
-                                    ? 'text-green-600'
-                                    : value === 'down'
-                                      ? 'text-red-600'
-                                      : 'text-gray-600'
-                              }`}>
-                                {typeof value === 'number' ? value.toLocaleString() : value}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        ))}
+      </div>
+
+      {/* Alerts Table */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white border">
+          <thead>
+            <tr>
+              <th className="px-4 py-2 border">Time</th>
+              <th className="px-4 py-2 border">Pair</th>
+              <th className="px-4 py-2 border">Timeframe</th>
+              <th className="px-4 py-2 border">Signal</th>
+              <th className="px-4 py-2 border">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {alerts.map((alert) => (
+              <tr key={alert.id}>
+                <td className="px-4 py-2 border">
+                  {alert.receivedAt?.toDate().toLocaleString()}
+                </td>
+                <td className="px-4 py-2 border">{alert.pair}</td>
+                <td className="px-4 py-2 border">{alert.timeframe}</td>
+                <td className="px-4 py-2 border">
+                  <span className={alert.data?.direction === 'up' ? 'text-green-600' : 'text-red-600'}>
+                    {alert.data?.direction === 'up' ? 'BUY' : 'SELL'}
+                  </span>
+                </td>
+                <td className="px-4 py-2 border">{alert.price}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
