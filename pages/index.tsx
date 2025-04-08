@@ -3,18 +3,6 @@ import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, limit 
 import { db } from '../lib/firebase';
 import { PairScreenerData } from '../types/pairScreener';
 
-interface PairScreenerData {
-  id: string;
-  pair: string;
-  timeframe: string;
-  price: number;
-  receivedAt: any;
-  data: {
-    [key: string]: any;
-  };
-  [key: string]: any;
-}
-
 const mockData = [
   {
     pair: "BTCUSDT",
