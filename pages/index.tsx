@@ -29,18 +29,6 @@ const mockData = [
     }
   },
   {
-    pair: "SOLUSDT",
-    timeframe: "1D",
-    price: 100.25,
-    receivedAt: serverTimestamp(),
-    data: {
-      rsi: 70,
-      macd: 200,
-      volume: 500000,
-      trend: "up"
-    }
-  },
-  {
     pair: "BNBUSDT",
     timeframe: "1H",
     price: 350.00,
