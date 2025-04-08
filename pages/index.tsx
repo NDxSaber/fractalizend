@@ -6,9 +6,11 @@ interface PairScreenerData {
   id: string;
   pair: string;
   timeframe: string;
-  signal: string;
   price: number;
-  timestamp: any;
+  receivedAt: any;
+  data: {
+    [key: string]: any;
+  };
   [key: string]: any;
 }
 
@@ -16,37 +18,62 @@ const mockData = [
   {
     pair: "BTCUSDT",
     timeframe: "1H",
-    signal: "BUY",
     price: 50000.50,
-    timestamp: serverTimestamp()
+    receivedAt: serverTimestamp(),
+    data: {
+      rsi: 65,
+      macd: 120,
+      volume: 1500000,
+      trend: "up"
+    }
   },
   {
     pair: "ETHUSDT",
     timeframe: "4H",
-    signal: "SELL",
     price: 2500.75,
-    timestamp: serverTimestamp()
+    receivedAt: serverTimestamp(),
+    data: {
+      rsi: 45,
+      macd: -80,
+      volume: 800000,
+      trend: "down"
+    }
   },
   {
     pair: "SOLUSDT",
     timeframe: "1D",
-    signal: "BUY",
     price: 100.25,
-    timestamp: serverTimestamp()
+    receivedAt: serverTimestamp(),
+    data: {
+      rsi: 70,
+      macd: 200,
+      volume: 500000,
+      trend: "up"
+    }
   },
   {
     pair: "BNBUSDT",
     timeframe: "1H",
-    signal: "SELL",
     price: 350.00,
-    timestamp: serverTimestamp()
+    receivedAt: serverTimestamp(),
+    data: {
+      rsi: 40,
+      macd: -150,
+      volume: 300000,
+      trend: "down"
+    }
   },
   {
     pair: "ADAUSDT",
     timeframe: "4H",
-    signal: "BUY",
     price: 0.50,
-    timestamp: serverTimestamp()
+    receivedAt: serverTimestamp(),
+    data: {
+      rsi: 55,
+      macd: 50,
+      volume: 200000,
+      trend: "sideways"
+    }
   }
 ];
 
@@ -59,7 +86,10 @@ export default function Home() {
   useEffect(() => {
     console.log('Setting up Firestore listener...');
     try {
-      const q = query(collection(db, 'pairScreener'), orderBy('timestamp', 'desc'));
+      const q = query(
+        collection(db, 'pairScreener', 'history', 'alerts'),
+        orderBy('receivedAt', 'desc')
+      );
       console.log('Query created:', q);
       
       const unsubscribe = onSnapshot(q, 
@@ -101,7 +131,7 @@ export default function Home() {
     setAddingMockData(true);
     try {
       for (const data of mockData) {
-        await addDoc(collection(db, 'pairScreener'), data);
+        await addDoc(collection(db, 'pairScreener', 'history', 'alerts'), data);
       }
       console.log('Mock data added successfully');
     } catch (error) {
@@ -121,78 +151,95 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Pair Screener Alerts</h1>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Pair Screener Alerts History</h1>
           <button
             onClick={addMockData}
             disabled={addingMockData}
-            className={`px-4 py-2 rounded ${
+            className={`px-6 py-3 rounded-lg ${
               addingMockData
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-500 hover:bg-blue-600'
-            } text-white font-medium`}
+                ? 'bg-gray-300 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 transition-colors duration-200'
+            } text-white font-medium shadow-sm`}
           >
             {addingMockData ? 'Adding Mock Data...' : 'Add Mock Data'}
           </button>
         </div>
         
         {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
             {error}
           </div>
         )}
+
+        <div className="mb-6 text-sm text-gray-500 bg-white p-4 rounded-lg shadow-sm">
+          Showing {alerts.length} latest alerts (max 100)
+        </div>
         
         {alerts.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-500">No alerts found in the database.</p>
+          <div className="bg-white rounded-lg shadow-sm p-12 text-center border border-gray-100">
+            <p className="text-gray-500 text-lg">No alerts found in the history.</p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-8 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Time
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-8 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Pair
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-8 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Timeframe
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Signal
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-8 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Price
+                  </th>
+                  <th scope="col" className="px-8 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Data
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-100">
                 {alerts.map((alert) => (
-                  <tr key={alert.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {alert.timestamp?.toDate().toLocaleTimeString()}
+                  <tr key={alert.id} className="hover:bg-gray-50 transition-colors duration-150">
+                    <td className="px-8 py-5 whitespace-nowrap text-sm text-gray-600">
+                      {alert.receivedAt?.toDate().toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-8 py-5 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{alert.pair}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-8 py-5 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{alert.timeframe}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        alert.signal === 'BUY' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {alert.signal}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-8 py-5 whitespace-nowrap text-sm text-gray-900 font-medium">
                       {alert.price.toLocaleString()}
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="text-sm text-gray-600">
+                        <div className="grid grid-cols-2 gap-2">
+                          {Object.entries(alert.data || {}).map(([key, value]) => (
+                            <div key={key} className="flex items-center space-x-2">
+                              <span className="font-medium text-gray-500">{key}:</span>
+                              <span className={`${
+                                typeof value === 'number' 
+                                  ? 'text-blue-600 font-medium'
+                                  : value === 'up' 
+                                    ? 'text-green-600'
+                                    : value === 'down'
+                                      ? 'text-red-600'
+                                      : 'text-gray-600'
+                              }`}>
+                                {typeof value === 'number' ? value.toLocaleString() : value}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ))}
