@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { PairScreenerData } from '../types/pairScreener';
 
 interface PairScreenerData {
   id: string;
@@ -82,13 +83,15 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [addingMockData, setAddingMockData] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     console.log('Setting up Firestore listener...');
     try {
       const q = query(
         collection(db, 'pairScreener', 'history', 'alerts'),
-        orderBy('receivedAt', 'desc')
+        orderBy('receivedAt', 'desc'),
+        limit(100)
       );
       console.log('Query created:', q);
       
@@ -142,6 +145,34 @@ export default function Home() {
     }
   };
 
+  const handleDeleteAll = async () => {
+    if (!confirm('Are you sure you want to delete all alerts? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const response = await fetch('/api/delete-alerts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete alerts');
+      }
+
+      const result = await response.json();
+      alert(`Successfully deleted ${result.deletedCount} alerts`);
+    } catch (error) {
+      console.error('Error deleting alerts:', error);
+      alert('Failed to delete alerts. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 p-4 flex items-center justify-center">
@@ -165,6 +196,17 @@ export default function Home() {
             } text-white font-medium shadow-sm`}
           >
             {addingMockData ? 'Adding Mock Data...' : 'Add Mock Data'}
+          </button>
+          <button
+            onClick={handleDeleteAll}
+            disabled={deleting || alerts.length === 0}
+            className={`px-4 py-2 rounded-md text-white ${
+              deleting || alerts.length === 0
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-red-600 hover:bg-red-700'
+            }`}
+          >
+            {deleting ? 'Deleting...' : 'Delete All Alerts'}
           </button>
         </div>
         
