@@ -64,6 +64,17 @@ export default function Screener() {
     }
   };
 
+  const getPullbackStatus = (direction: string) => {
+    switch (direction?.toLowerCase()) {
+      case 'up':
+        return styles.indicatorBar + ' ' + styles.bullish;
+      case 'down':
+        return styles.indicatorBar + ' ' + styles.bearish;
+      default:
+        return styles.indicatorBar + ' ' + styles.black;
+    }
+  };
+
   const filteredPairs = pairs.filter(pair => 
     pair.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -115,6 +126,7 @@ export default function Screener() {
                   <div key={timeframe} className={styles.timeframeItem}>
                     <span className={styles.timeframeLabel}>{getTimeframeName(timeframe)}</span>
                     <div className={getIndicatorClass(direction)} title={`${timeframe}: ${direction}`} />
+                    <div className={getPullbackStatus(direction)} title={`${timeframe}: ${direction}`} />
                   </div>
                 ))}
               </div>

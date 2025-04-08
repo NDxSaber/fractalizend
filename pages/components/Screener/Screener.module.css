@@ -52,11 +52,19 @@
 }
 
 .indicatorBar.bearish {
-  background-color: #ef4444;
+  background-color: #F72C5B;
 }
 
 .indicatorBar.neutral {
   background-color: #9ca3af;
+}
+
+.indicatorBar.standby {
+  background-color: #FCB454;
+}
+
+.indicatorBar.black {
+  background-color: #000000;
 }
 
 .grid {
