@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query } from 'firebase/firestore';
-import { FirebaseError } from 'firebase/app';
 import { db } from '../../../lib/firebase';
 import styles from './Screener.module.css';
 
 interface PairData {
   id: string;
   directionTimeframe: {
-    [key: string]: string; // timeframe: direction
+    [key: string]: string;
   };
   history: Array<{
     price: number;
@@ -24,58 +23,34 @@ export default function Screener() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    console.log('🔔 Setting up real-time listener for pairs...');
-    
     const pairsQuery = query(collection(db, 'pairs'));
     
     const unsubscribe = onSnapshot(
       pairsQuery,
       (snapshot) => {
-        console.log('📡 Received real-time update');
-        
         if (snapshot.empty) {
-          console.log('⚠️ No pairs found in the collection');
           setPairs([]);
           setLoading(false);
           return;
         }
         
-        const pairsData = snapshot.docs.map(doc => {
-          const data = doc.data();
-          console.log(`📦 Processing pair ${doc.id}:`, data);
-          
-          return {
-            id: doc.id,
-            directionTimeframe: data.directionTimeframe || {},
-            history: data.history || []
-          } as PairData;
-        });
+        const pairsData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          directionTimeframe: doc.data().directionTimeframe || {},
+          history: doc.data().history || []
+        })) as PairData[];
 
-        console.log('✅ Updated pairs data:', pairsData);
         setPairs(pairsData);
         setLoading(false);
       },
       (err) => {
-        console.error('❌ Error in real-time listener:', err);
-        if (err instanceof FirebaseError) {
-          console.error('🔥 Firebase error details:', {
-            name: err.name,
-            message: err.message,
-            code: err.code,
-            stack: err.stack
-          });
-        } else {
-          console.error('🔥 Unknown error:', err);
-        }
+        console.error('Error fetching pairs:', err);
         setError('Error fetching pairs');
         setLoading(false);
       }
     );
 
-    return () => {
-      console.log('🧹 Cleaning up real-time listener');
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
   const getIndicatorClass = (direction: string) => {

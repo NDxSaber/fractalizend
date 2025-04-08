@@ -1,7 +1,3 @@
-import { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
-import { FirebaseError } from 'firebase/app';
-import { db } from '../lib/firebase';
 import Screener from './components/Screener';
 
 export default function Home() {

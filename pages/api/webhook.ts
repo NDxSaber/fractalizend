@@ -5,7 +5,7 @@ import { collection, doc, getDoc, setDoc, updateDoc, arrayUnion } from 'firebase
 interface WebhookData {
   pair: string;
   timeframe: string;
-  price: number;
+  timestamp: string;
   data?: {
     direction: string;
     [key: string]: any;
@@ -18,7 +18,7 @@ interface WebhookData {
 // -d '{
 //   "pair": "testing",
 //   "timeframe": "1H",
-//   "price": 50000.50,
+//   "timestamp": "2023-10-25T14:30:45.000Z",
 //   "data": {
 //     "direction": "up"
 //   }
@@ -29,7 +29,7 @@ interface WebhookData {
 // -d '{
 //   "pair": "btcusd",
 //   "timeframe": "1m",
-//   "price": 50000.50,
+//   "timestamp": "2023-10-25T14:30:45.000Z",
 //   "data": {
 //     "direction": "down"
 //   }
@@ -48,27 +48,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { pair, timeframe, price, data } = req.body;
-    console.log('📦 Received webhook data:', { pair, timeframe, price, data });
+    const { pair, timeframe, timestamp, data } = req.body;
+    console.log('📦 Received webhook data:', { pair, timeframe, timestamp, data });
 
-    if (!pair || !timeframe || !price || !data?.direction) {
-      console.log('❌ Missing required fields:', { pair, timeframe, price, data });
+    if (!pair || !timeframe || !timestamp || !data?.direction) {
+      console.log('❌ Missing required fields:', { pair, timeframe, timestamp, data });
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
     const direction = data.direction;
     console.log('📊 Using direction from data:', direction);
-
-    // Format timestamp as YYYY-MM-DD HH:mm:ss
-    const now = new Date();
-    const formattedTimestamp = now.getFullYear() + '-' + 
-                               String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-                               String(now.getDate()).padStart(2, '0') + ' ' + 
-                               String(now.getHours()).padStart(2, '0') + ':' + 
-                               String(now.getMinutes()).padStart(2, '0') + ':' + 
-                               String(now.getSeconds()).padStart(2, '0');
-    
-    console.log('⏰ Formatted timestamp:', formattedTimestamp);
 
     // Reference to the pair document
     const pairRef = doc(db, 'pairs', pair);
@@ -85,10 +74,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           [timeframe]: direction
         },
         history: [{
-          price: parseFloat(price),
           direction: direction,
           timeframe: timeframe,
-          timestamp: formattedTimestamp
+          timestamp: timestamp
         }]
       };
       console.log('📝 New pair data:', newPairData);
@@ -109,10 +97,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Add new history entry
       const newHistoryEntry = {
-        price: parseFloat(price),
         direction: direction,
         timeframe: timeframe,
-        timestamp: formattedTimestamp
+        timestamp: timestamp
       };
       console.log('📝 New history entry:', newHistoryEntry);
 
