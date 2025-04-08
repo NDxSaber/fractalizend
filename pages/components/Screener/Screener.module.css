@@ -1,0 +1,66 @@
+.pairCard {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+.pairCard:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.pairHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.pairName {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.timeframeContainer {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.timeframeItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.timeframeLabel {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.indicatorBar {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.indicatorBar.bullish {
+  background-color: #10b981;
+}
+
+.indicatorBar.bearish {
+  background-color: #ef4444;
+}
+
+.indicatorBar.neutral {
+  background-color: #9ca3af;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+} 

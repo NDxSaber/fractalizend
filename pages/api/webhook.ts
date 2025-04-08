@@ -1,13 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { adminDb } from '../../lib/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
-import { sendWhatsAppAlert } from '../../lib/whatsapp';
+import { db } from '../../lib/firebase';
+import { collection, doc, getDoc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 
 interface WebhookData {
   pair: string;
   timeframe: string;
   price: number;
   data?: {
+    direction: string;
     [key: string]: any;
   };
 }
@@ -20,119 +20,120 @@ interface WebhookData {
 //   "timeframe": "1H",
 //   "price": 50000.50,
 //   "data": {
-//     "direction": "up",
+//     "direction": "up"
 //   }
 // }'
 
 // curl -X POST http://localhost:3000/api/webhook \
 // -H "Content-Type: application/json" \
 // -d '{
-//   "pair": "test",
+//   "pair": "btcusd",
 //   "timeframe": "1m",
 //   "price": 50000.50,
 //   "data": {
-//     "direction": "up",
+//     "direction": "down"
 //   }
 // }'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log('🔔 Webhook received:', {
+    method: req.method,
+    headers: req.headers,
+    body: req.body
+  });
+
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    console.log('❌ Method not allowed:', req.method);
+    return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
-    console.log('🔔 Webhook received:', {
-      method: req.method,
-      headers: req.headers,
-      body: req.body
-    });
-
     const { pair, timeframe, price, data } = req.body;
+    console.log('📦 Received webhook data:', { pair, timeframe, price, data });
 
-    // Add timestamp to the data
-    const dataWithTimestamp = {
-      ...req.body,
-      receivedAt: FieldValue.serverTimestamp()
-    };
-
-    console.log('⏰ Data with timestamp:', dataWithTimestamp);
-
-    // 1. Add to main history collection
-    const historyRef = adminDb.collection('pairScreener').doc('history').collection('alerts');
-    console.log('📚 Using collection reference: pairScreener/history/alerts');
-
-    // 2. Create or update pair-specific collection
-    const pairRef = adminDb.collection('pairScreener').doc('pairs').collection(pair).doc('history').collection('alerts');
-    console.log(`📚 Using pair-specific collection reference: pairScreener/pairs/${pair}/history/alerts`);
-
-    // 3. Analyze timeframe data and determine trend
-    const analyzeTimeframe = (data: any) => {
-      const { direction } = data;
-      let timeframeStatus = 'Normal';
-
-      if (direction === 'up') {
-        timeframeStatus = 'Bullish';
-      } else if (direction === 'down') {
-        timeframeStatus = 'Bearish';
-      }
-
-      return timeframeStatus;
-    };
-
-    const timeframeStatus = analyzeTimeframe(data);
-    console.log(`📊 Timeframe analysis for ${pair} ${timeframe}: ${timeframeStatus} (based on direction: ${data.direction})`);
-
-    // 4. Update pair document with timeframe status
-    const pairDocRef = adminDb.collection('pairScreener').doc('pairs').collection(pair).doc('info');
-    await pairDocRef.set({
-      [timeframe]: timeframeStatus,
-      lastUpdated: FieldValue.serverTimestamp()
-    }, { merge: true });
-    console.log(`✅ Updated pair document with ${timeframe} status: ${timeframeStatus}`);
-
-    // 5. Add to pair-specific history
-    const pairHistoryDoc = await pairRef.add(dataWithTimestamp);
-    console.log(`✅ Added to pair-specific history with ID: ${pairHistoryDoc.id}`);
-
-    // 6. Add to main history
-    const historyDoc = await historyRef.add(dataWithTimestamp);
-    console.log(`✅ Added to main history with ID: ${historyDoc.id}`);
-
-    // 7. Check and maintain history limit
-    const historySnapshot = await historyRef.count().get();
-    const currentCount = historySnapshot.data().count;
-    console.log(`📊 Current alert count: ${currentCount}`);
-
-    if (currentCount > 100) {
-      const oldestDoc = await historyRef.orderBy('receivedAt').limit(1).get();
-      if (!oldestDoc.empty) {
-        await oldestDoc.docs[0].ref.delete();
-        console.log('🗑️ Deleted oldest alert to maintain limit');
-      }
+    if (!pair || !timeframe || !price || !data?.direction) {
+      console.log('❌ Missing required fields:', { pair, timeframe, price, data });
+      return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // 8. Send WhatsApp notification
-    try {
-      await sendWhatsAppAlert({
-        pair,
-        timeframe,
-        price,
-        signal: timeframeStatus
+    const direction = data.direction;
+    console.log('📊 Using direction from data:', direction);
+
+    // Format timestamp as YYYY-MM-DD HH:mm:ss
+    const now = new Date();
+    const formattedTimestamp = now.getFullYear() + '-' + 
+                               String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                               String(now.getDate()).padStart(2, '0') + ' ' + 
+                               String(now.getHours()).padStart(2, '0') + ':' + 
+                               String(now.getMinutes()).padStart(2, '0') + ':' + 
+                               String(now.getSeconds()).padStart(2, '0');
+    
+    console.log('⏰ Formatted timestamp:', formattedTimestamp);
+
+    // Reference to the pair document
+    const pairRef = doc(db, 'pairs', pair);
+    console.log('📚 Using pair reference:', pairRef.path);
+
+    const pairDoc = await getDoc(pairRef);
+    console.log('📄 Pair document exists:', pairDoc.exists());
+
+    // Create or update the pair document
+    if (!pairDoc.exists()) {
+      console.log('➕ Creating new pair document');
+      const newPairData = {
+        directionTimeframe: {
+          [timeframe]: direction
+        },
+        history: [{
+          price: parseFloat(price),
+          direction: direction,
+          timeframe: timeframe,
+          timestamp: formattedTimestamp
+        }]
+      };
+      console.log('📝 New pair data:', newPairData);
+
+      await setDoc(pairRef, newPairData);
+      console.log('✅ Created new pair document for', pair);
+    } else {
+      console.log('🔄 Updating existing pair document');
+      const currentData = pairDoc.data();
+      console.log('📊 Current pair data:', currentData);
+      
+      // Update directionTimeframe
+      const updatedDirectionTimeframe = {
+        ...currentData.directionTimeframe,
+        [timeframe]: direction
+      };
+      console.log('📈 Updated directionTimeframe:', updatedDirectionTimeframe);
+
+      // Add new history entry
+      const newHistoryEntry = {
+        price: parseFloat(price),
+        direction: direction,
+        timeframe: timeframe,
+        timestamp: formattedTimestamp
+      };
+      console.log('📝 New history entry:', newHistoryEntry);
+
+      await updateDoc(pairRef, {
+        directionTimeframe: updatedDirectionTimeframe,
+        history: arrayUnion(newHistoryEntry)
       });
-      console.log('📱 WhatsApp notification sent successfully');
-    } catch (error) {
-      console.error('❌ Failed to send WhatsApp notification:', error);
+      console.log('✅ Updated pair document for', pair);
     }
 
-    return res.status(200).json({ 
-      success: true, 
-      historyId: historyDoc.id,
-      pairHistoryId: pairHistoryDoc.id,
-      timeframeStatus
-    });
-
+    console.log('🎉 Webhook processing completed successfully');
+    return res.status(200).json({ message: 'Data saved successfully' });
   } catch (error) {
     console.error('❌ Error processing webhook:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+    }
+    return res.status(500).json({ message: 'Internal server error' });
   }
 } 
