@@ -1,98 +1,190 @@
+.container {
+  width: 100%;
+}
+
+.filters {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.tagFilters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tagTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tagButton {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #4b5563;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tagButton:hover {
+  background-color: #f3f4f6;
+}
+
+.tagButtonActive {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.tagButtonActive:hover {
+  background-color: #2563eb;
+}
+
 .pairCard {
-  background-color: #FFFFFF;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
 }
 
 .pairCard:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  transform: translateY(-2px);
-}
-
-.pairCard.bookmarked {
-  border: 2px solid #FFC107;
-  background-color: #FFFBEB;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .pairHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #eaeaea;
-}
-
-.bookmarkButton {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.bookmarkButton:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.bookmarkButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  margin-bottom: 1rem;
 }
 
 .pairName {
-  font-weight: bold;
-  font-size: 1.1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.tags {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tag {
+  padding: 0.25rem 0.5rem;
+  background-color: #f3f4f6;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: #4b5563;
 }
 
 .timeframeContainer {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .timeframeItem {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .timeframeLabel {
-  min-width: 30px;
-  font-size: 0.9rem;
-  color: #333;
+  min-width: 3rem;
+  font-size: 0.75rem;
+  color: #6b7280;
 }
 
 .indicatorBar {
-  height: 12px;
-  width: 100%;
-  border-radius: 6px;
+  flex: 1;
+  height: 0.5rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
 }
 
 .bullish {
-  background-color: #00C853;
+  background-color: #10b981;
 }
 
 .bearish {
-  background-color: #F72C5B;
+  background-color: #ef4444;
 }
 
 .neutral {
-  background-color: #B0BEC5;
-}
-
-.black {
-  background-color: #333;
+  background-color: #9ca3af;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error {
+  padding: 1rem;
+  background-color: #fee2e2;
+  color: #dc2626;
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.noResults {
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
 } 

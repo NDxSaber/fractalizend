@@ -87,30 +87,12 @@ export default function Home() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">Trading Dashboard</h1>
+      <h1 className="text-3xl font-bold mb-8 text-center">FractalizeND</h1>
 
       <div className="grid grid-cols-1 gap-8">
-        {bookmarkedPairs.length > 0 && (
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4 border-b pb-2">Your Bookmarked Pairs</h2>
-            <p className="text-sm text-gray-600 mb-4">Quick access to your favorite pairs.</p>
-            <div className="flex flex-wrap gap-2">
-              {bookmarkedPairs.map((pairId) => (
-                <a 
-                  key={pairId}
-                  href="#screener"
-                  onClick={() => handleBookmarkClick(pairId)}
-                  className="px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-md text-sm font-medium text-yellow-800 hover:bg-yellow-100 transition-colors"
-                >
-                  {pairId}
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
 
         <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 border-b pb-2" id="screener">Pairs Overview</h2>
+          <h2 className="text-xl font-semibold mb-4 border-b pb-2" id="screener">Screener</h2>
           <Screener />
         </div>
 

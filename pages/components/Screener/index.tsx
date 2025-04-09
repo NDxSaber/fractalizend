@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc, setDoc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
 import styles from './Screener.module.css';
 // We can manually add these icons for now since react-icons isn't installed
@@ -28,6 +28,8 @@ interface PairData {
     timestamp: string;
   }>;
   bookmarked?: boolean;
+  tags: string[];
+  lastUpdated: string;
 }
 
 interface BookmarksData {
@@ -44,6 +46,8 @@ export default function Screener() {
   const [bookmarkedPairs, setBookmarkedPairs] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<'bookmarked' | 'name'>('bookmarked');
   const [savingBookmark, setSavingBookmark] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
 
   // Fetch pairs and bookmarks
   useEffect(() => {
@@ -87,11 +91,20 @@ export default function Screener() {
             id: pairId,
             directionTimeframe: doc.data().directionTimeframe || {},
             history: doc.data().history || [],
-            bookmarked: bookmarkedPairs.includes(pairId)
+            bookmarked: bookmarkedPairs.includes(pairId),
+            tags: doc.data().tags || ['forex'],
+            lastUpdated: doc.data().lastUpdated || new Date().toISOString()
           };
         }) as PairData[];
 
         setPairs(pairsData);
+        
+        // Extract unique tags from all pairs
+        const uniqueTags = Array.from(
+          new Set(pairsData.flatMap(pair => pair.tags))
+        ).sort();
+        setAvailableTags(uniqueTags);
+        
         setLoading(false);
       },
       (err) => {
@@ -102,7 +115,7 @@ export default function Screener() {
     );
 
     return () => unsubscribe();
-  }, [bookmarkedPairs.length]); // Re-run when bookmarks change
+  }, [bookmarkedPairs.length]);
 
   // Update bookmarked status when bookmarkedPairs changes
   useEffect(() => {
@@ -164,59 +177,74 @@ export default function Screener() {
     }
   };
 
-  // Filter pairs based on search term and sort them
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag)
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
+  };
+
+  // Filter pairs based on search term and selected tags
   const filteredAndSortedPairs = pairs
-    .filter(pair => 
-      pair.id.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter(pair => {
+      const matchesSearch = pair.id.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesTags = selectedTags.length === 0 || 
+        selectedTags.some(tag => pair.tags.includes(tag));
+      return matchesSearch && matchesTags;
+    })
     .sort((a, b) => {
-      // First sort by bookmarked status if sortBy is 'bookmarked'
       if (sortBy === 'bookmarked') {
         if (a.bookmarked && !b.bookmarked) return -1;
         if (!a.bookmarked && b.bookmarked) return 1;
       }
-      
-      // Then sort by name alphabetically
       return a.id.localeCompare(b.id);
     });
 
   if (loading) {
     return (
-      <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading pairs...</p>
+      <div className={styles.loading}>
+        <div className={styles.spinner} />
+        <p>Loading pairs...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 rounded bg-red-100 text-red-700">
-        <p className="font-bold">Error</p>
+      <div className={styles.error}>
         <p>{error}</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="mb-4 flex flex-col sm:flex-row gap-2">
+    <div className={styles.container}>
+      <div className={styles.filters}>
         <input
-          id="pairSearch"
           type="text"
           placeholder="Search pairs..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-grow px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className={styles.searchInput}
         />
-        <select 
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as 'bookmarked' | 'name')}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          <option value="bookmarked">Sort by: Bookmarked first</option>
-          <option value="name">Sort by: Name</option>
-        </select>
+        
+        <div className={styles.tagFilters}>
+          <h3 className={styles.tagTitle}>Filter by Tags:</h3>
+          <div className={styles.tagList}>
+            {availableTags.map(tag => (
+              <button
+                key={tag}
+                onClick={() => handleTagToggle(tag)}
+                className={`${styles.tagButton} ${
+                  selectedTags.includes(tag) ? styles.tagButtonActive : ''
+                }`}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {bookmarkedPairs.length > 0 && (
@@ -228,8 +256,8 @@ export default function Screener() {
       )}
 
       {filteredAndSortedPairs.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-gray-600">No pairs found matching "{searchTerm}"</p>
+        <div className={styles.noResults}>
+          <p>No pairs found matching your criteria.</p>
         </div>
       ) : (
         <div className={styles.grid}>
@@ -266,7 +294,7 @@ export default function Screener() {
       )}
     </div>
   );
-};
+}
 
 const getTimeframeName = (timeframe: string) => {
   if (timeframe === "1") return '1m';
