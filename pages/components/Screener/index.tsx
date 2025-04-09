@@ -169,11 +169,11 @@ export default function Screener() {
   const getPullbackStatus = (direction: string) => {
     switch (direction?.toLowerCase()) {
       case 'up':
-        return styles.indicatorBar + ' ' + styles.bullish;
+        return styles.indicatorPullbackBar + ' ' + styles.bullish;
       case 'down':
-        return styles.indicatorBar + ' ' + styles.bearish;
+        return styles.indicatorPullbackBar + ' ' + styles.bearish;
       default:
-        return styles.indicatorBar + ' ' + styles.black;
+        return styles.indicatorPullbackBar + ' ' + styles.black;
     }
   };
 
