@@ -1,0 +1,96 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.section {
+  margin-bottom: 3rem;
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.section:last-child {
+  margin-bottom: 0;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #2d3748;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+.newsList,
+.seasonList {
+  display: grid;
+  gap: 1rem;
+}
+
+.newsItem,
+.seasonItem {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.newsItem:hover,
+.seasonItem:hover {
+  transform: translateY(-2px);
+}
+
+.newsItem .time {
+  color: #718096;
+  font-size: 1.25rem;
+  min-width: 80px;
+  padding-top: 0.25rem;
+}
+
+.newsItem .content {
+  flex: 1;
+}
+
+.newsItem h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: #2d3748;
+}
+
+.newsItem p {
+  color: #4a5568;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.time,
+.date,
+.dateRange {
+  color: #718096;
+  font-size: 0.875rem;
+}
+
+.noItems {
+  color: #718096;
+  text-align: center;
+  padding: 1rem;
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #718096;
+} 

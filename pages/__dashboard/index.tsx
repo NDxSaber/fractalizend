@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import Notification from '../../components/ui/Notification';
+import VibrationalDates from './components/VibrationalDates';
 
 interface PairData {
   id: string;
@@ -224,6 +225,10 @@ export default function Dashboard() {
             </>
           )}
         </div>
+      </div>
+
+      <div className="space-y-8">
+        <VibrationalDates />
       </div>
     </div>
   );

@@ -1,0 +1,179 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.form {
+  background-color: #f8f9fa;
+  padding: 2rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.dateTimeGroup {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.formGroup {
+  margin-bottom: 1rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.formGroup input,
+.formGroup textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.formGroup textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.submitButton,
+.cancelButton {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-right: 1rem;
+}
+
+.submitButton {
+  background-color: #007bff;
+  color: white;
+  border: none;
+}
+
+.submitButton:hover {
+  background-color: #0056b3;
+}
+
+.cancelButton {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+}
+
+.cancelButton:hover {
+  background-color: #5a6268;
+}
+
+.datesList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.dateCard {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dateHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.dateHeader h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.dateActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.editButton,
+.deleteButton {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.editButton {
+  background-color: #28a745;
+  color: white;
+  border: none;
+}
+
+.editButton:hover {
+  background-color: #218838;
+}
+
+.deleteButton {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+}
+
+.deleteButton:hover {
+  background-color: #c82333;
+}
+
+.date {
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.description {
+  color: #495057;
+  line-height: 1.5;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error {
+  color: #dc3545;
+  text-align: center;
+  padding: 1rem;
+  background-color: #f8d7da;
+  border-radius: 4px;
+  margin: 1rem 0;
+} 
