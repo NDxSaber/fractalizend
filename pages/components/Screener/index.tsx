@@ -204,7 +204,8 @@ export default function Screener({ selectedTags, onTagsChange }: ScreenerProps) 
   const filteredPairs = pairs
     .filter(pair => {
       const matchesSearch = pair.id.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesTags = selectedTags.length === 0 || selectedTags.every(tag => pair.tags.includes(tag));
+      const matchesTags = selectedTags.length === 0 || 
+        selectedTags.some(tag => pair.tags.includes(tag));
       return matchesSearch && matchesTags;
     })
     .sort((a, b) => {
