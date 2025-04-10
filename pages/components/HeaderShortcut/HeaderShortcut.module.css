@@ -1,0 +1,32 @@
+.shortcuts {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: 1rem;
+}
+
+.shortcutButton {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shortcutButton:hover {
+  background-color: #f7fafc;
+  transform: translateY(-1px);
+}
+
+.icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #4a5568;
+}
+
+.shortcutButton:hover .icon {
+  color: #2d3748;
+} 

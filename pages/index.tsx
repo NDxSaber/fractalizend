@@ -2,34 +2,39 @@ import { useState } from 'react';
 import Head from 'next/head';
 import Screener from './components/Screener';
 import VibrationalDatesPreview from './components/VibrationalDatesPreview';
+import DigitalClock from './components/DigitalClock';
+import HeaderShortcut from './components/HeaderShortcut';
+import styles from '../styles/Home.module.css';
 
 export default function Home() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const handleTagsChange = (tags: string[]) => {
-    setSelectedTags(tags);
-  };
-
   return (
-    <div className="min-h-screen bg-gray-100">
+    <>
       <Head>
         <title>FractalizeND</title>
         <meta name="description" content="FractalizeND - Trading Dashboard" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-center">FractalizeND</h1>
-        
-        <VibrationalDatesPreview />
-        
-        <div className="mt-8">
-          <Screener 
-            selectedTags={selectedTags}
-            onTagsChange={handleTagsChange}
-          />
+      <header className={styles.header}>
+        <div className={styles.headerContent}>
+          <div className={styles.headerLeft}>
+            <h1 className={styles.title}>FractalizeND</h1>
+            <HeaderShortcut />
+          </div>
+          <DigitalClock />
+        </div>
+      </header>
+
+      <main className={styles.main}>
+        <div id="today-news" className={styles.section}>
+          <VibrationalDatesPreview />
+        </div>
+        <div id="screener" className={styles.section}>
+          <Screener selectedTags={selectedTags} onTagsChange={setSelectedTags} />
         </div>
       </main>
-    </div>
+    </>
   );
 } 

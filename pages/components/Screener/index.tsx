@@ -38,7 +38,12 @@ interface BookmarksData {
 
 const BOOKMARKS_DOC_ID = 'user_bookmarks';
 
-export default function Screener() {
+interface ScreenerProps {
+  selectedTags: string[];
+  onTagsChange: (tags: string[]) => void;
+}
+
+export default function Screener({ selectedTags, onTagsChange }: ScreenerProps) {
   const [pairs, setPairs] = useState<PairData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +51,6 @@ export default function Screener() {
   const [bookmarkedPairs, setBookmarkedPairs] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<'bookmarked' | 'name'>('bookmarked');
   const [savingBookmark, setSavingBookmark] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
 
   // Fetch pairs and bookmarks
@@ -178,11 +182,10 @@ export default function Screener() {
   };
 
   const handleTagToggle = (tag: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tag)
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    );
+    const newTags = selectedTags.includes(tag)
+      ? selectedTags.filter(t => t !== tag)
+      : [...selectedTags, tag];
+    onTagsChange(newTags);
   };
 
   // Filter pairs based on search term and selected tags
