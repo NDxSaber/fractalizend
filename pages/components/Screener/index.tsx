@@ -52,6 +52,8 @@ export default function Screener({ selectedTags, onTagsChange }: ScreenerProps) 
   const [sortBy, setSortBy] = useState<'bookmarked' | 'name'>('bookmarked');
   const [savingBookmark, setSavingBookmark] = useState(false);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [selectedTimeframes, setSelectedTimeframes] = useState<string[]>([]);
+  const availableTimeframes = ['1m', '5m', '15m', '1h', '4h', '1d'];
 
   // Fetch pairs and bookmarks
   useEffect(() => {
@@ -188,12 +190,21 @@ export default function Screener({ selectedTags, onTagsChange }: ScreenerProps) 
     onTagsChange(newTags);
   };
 
-  // Filter pairs based on search term and selected tags
-  const filteredAndSortedPairs = pairs
+  const handleTimeframeToggle = (timeframe: string) => {
+    setSelectedTimeframes(prev => {
+      if (prev.includes(timeframe)) {
+        return prev.filter(tf => tf !== timeframe);
+      } else {
+        return [...prev, timeframe];
+      }
+    });
+  };
+
+  // Filter pairs based on search term and selected tags only
+  const filteredPairs = pairs
     .filter(pair => {
       const matchesSearch = pair.id.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesTags = selectedTags.length === 0 || 
-        selectedTags.some(tag => pair.tags.includes(tag));
+      const matchesTags = selectedTags.length === 0 || selectedTags.every(tag => pair.tags.includes(tag));
       return matchesSearch && matchesTags;
     })
     .sort((a, b) => {
@@ -203,6 +214,36 @@ export default function Screener({ selectedTags, onTagsChange }: ScreenerProps) 
       }
       return a.id.localeCompare(b.id);
     });
+
+  // Helper function to filter timeframes for a pair
+  const getFilteredTimeframes = (pair: PairData) => {
+    if (!pair.directionTimeframe) return {};
+    
+    if (selectedTimeframes.length === 0) {
+      return pair.directionTimeframe;
+    }
+    
+    // Convert timeframe format if needed (e.g., "1" to "1m")
+    const formatTimeframe = (tf: string) => {
+      if (tf === "1") return "1m";
+      if (tf === "5") return "5m";
+      if (tf === "15") return "15m";
+      if (tf === "30") return "30m";
+      if (tf === "60") return "1h";
+      if (tf === "240") return "4h";
+      if (tf === "D") return "1d";
+      return tf;
+    };
+
+    const filtered: { [key: string]: string } = {};
+    Object.entries(pair.directionTimeframe).forEach(([tf, direction]) => {
+      const formattedTf = formatTimeframe(tf);
+      if (selectedTimeframes.includes(formattedTf)) {
+        filtered[tf] = direction;
+      }
+    });
+    return filtered;
+  };
 
   if (loading) {
     return (
@@ -224,24 +265,43 @@ export default function Screener({ selectedTags, onTagsChange }: ScreenerProps) 
   return (
     <div className={styles.container}>
       <div className={styles.filters}>
-        <input
-          type="text"
-          placeholder="Search pairs..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className={styles.searchInput}
-        />
-        
-        <div className={styles.tagFilters}>
-          <h3 className={styles.tagTitle}>Filter by Tags:</h3>
-          <div className={styles.tagList}>
+        <div className={styles.searchContainer}>
+          <input
+            type="text"
+            placeholder="Search pairs..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className={styles.searchInput}
+          />
+        </div>
+
+        <div className={styles.filterSection}>
+          <h3 className={styles.filterTitle}>Timeframes</h3>
+          <div className={styles.timeframeFilters}>
+            {availableTimeframes.map(timeframe => (
+              <button
+                key={timeframe}
+                className={`${styles.timeframeButton} ${
+                  selectedTimeframes.includes(timeframe) ? styles.selected : ''
+                }`}
+                onClick={() => handleTimeframeToggle(timeframe)}
+              >
+                {timeframe}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.filterSection}>
+          <h3 className={styles.filterTitle}>Tags</h3>
+          <div className={styles.tagFilters}>
             {availableTags.map(tag => (
               <button
                 key={tag}
-                onClick={() => handleTagToggle(tag)}
                 className={`${styles.tagButton} ${
-                  selectedTags.includes(tag) ? styles.tagButtonActive : ''
+                  selectedTags.includes(tag) ? styles.selected : ''
                 }`}
+                onClick={() => handleTagToggle(tag)}
               >
                 {tag}
               </button>
@@ -258,41 +318,46 @@ export default function Screener({ selectedTags, onTagsChange }: ScreenerProps) 
         </div>
       )}
 
-      {filteredAndSortedPairs.length === 0 ? (
+      {filteredPairs.length === 0 ? (
         <div className={styles.noResults}>
           <p>No pairs found matching your criteria.</p>
         </div>
       ) : (
         <div className={styles.grid}>
-          {filteredAndSortedPairs.map((pair) => (
-            <div key={pair.id} className={`${styles.pairCard} ${pair.bookmarked ? styles.bookmarked : ''}`}>
-              <div className={styles.pairHeader}>
-                <span className={styles.pairName}>{pair.id}</span>
-                <button 
-                  onClick={() => toggleBookmark(pair.id)}
-                  className={styles.bookmarkButton}
-                  disabled={savingBookmark}
-                  aria-label={pair.bookmarked ? "Remove bookmark" : "Add bookmark"}
-                >
-                  {pair.bookmarked ? <FaStar /> : <FaRegStar />}
-                </button>
-              </div>
-              
-              <div className={styles.timeframeContainer}>
-                {Object.entries(pair.directionTimeframe || {}).map(([timeframe, direction]) => (
-                  <div key={timeframe} className={styles.timeframeItem}>
-                    <span className={styles.timeframeLabel}>{getTimeframeName(timeframe)}</span>
-                    <div className={getIndicatorClass(direction)} title={`${timeframe}: ${direction}`} />
-                    <div className={getPullbackStatus(direction)} title={`${timeframe}: ${direction}`} />
+          {filteredPairs.map((pair) => {
+            const filteredTimeframes = getFilteredTimeframes(pair);
+            const hasTimeframes = Object.keys(filteredTimeframes).length > 0;
+
+            return (
+              <div key={pair.id} className={`${styles.pairCard} ${pair.bookmarked ? styles.bookmarked : ''}`}>
+                <div className={styles.pairHeader}>
+                  <span className={styles.pairName}>{pair.id}</span>
+                  <button 
+                    onClick={() => toggleBookmark(pair.id)}
+                    className={styles.bookmarkButton}
+                    disabled={savingBookmark}
+                    aria-label={pair.bookmarked ? "Remove bookmark" : "Add bookmark"}
+                  >
+                    {pair.bookmarked ? <FaStar /> : <FaRegStar />}
+                  </button>
+                </div>
+                
+                {hasTimeframes ? (
+                  <div className={styles.timeframeContainer}>
+                    {Object.entries(filteredTimeframes).map(([timeframe, direction]) => (
+                      <div key={timeframe} className={styles.timeframeItem}>
+                        <span className={styles.timeframeLabel}>{getTimeframeName(timeframe)}</span>
+                        <div className={getIndicatorClass(direction)} title={`${timeframe}: ${direction}`} />
+                        <div className={getPullbackStatus(direction)} title={`${timeframe}: ${direction}`} />
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <p className={styles.noTimeframes}>No timeframes available</p>
+                )}
               </div>
-              
-              {Object.keys(pair.directionTimeframe || {}).length === 0 && (
-                <p className="text-gray-500 text-sm p-2">No timeframes available</p>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -3,31 +3,73 @@
 }
 
 .filters {
+  margin-bottom: 2rem;
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.filterSection {
+  margin-top: 1.5rem;
+}
+
+.filterTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 0.75rem;
+}
+
+.searchContainer {
   margin-bottom: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
 }
 
 .searchInput {
   width: 100%;
-  padding: 0.5rem 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
   font-size: 1rem;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .searchInput:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
 }
 
+.timeframeFilters,
 .tagFilters {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.timeframeButton,
+.tagButton {
+  padding: 0.5rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background-color: white;
+  color: #4a5568;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.timeframeButton:hover,
+.tagButton:hover {
+  background-color: #f7fafc;
+  border-color: #cbd5e0;
+}
+
+.timeframeButton.selected,
+.tagButton.selected {
+  background-color: #4299e1;
+  color: white;
+  border-color: #4299e1;
 }
 
 .tagTitle {
@@ -204,4 +246,14 @@
   padding: 2rem;
   text-align: center;
   color: #6b7280;
+}
+
+.noTimeframes {
+  color: #718096;
+  font-size: 0.875rem;
+  padding: 1rem;
+  text-align: center;
+  background-color: #f7fafc;
+  border-radius: 6px;
+  margin: 0.5rem 0;
 } 
