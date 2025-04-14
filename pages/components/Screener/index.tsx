@@ -30,6 +30,9 @@ interface PairData {
   bookmarked?: boolean;
   tags: string[];
   lastUpdated: string;
+  confirmationTimeframe?: {
+    [key: string]: string;
+  };
 }
 
 interface BookmarksData {
@@ -99,7 +102,8 @@ export default function Screener({ selectedTags, onTagsChange }: ScreenerProps) 
             history: doc.data().history || [],
             bookmarked: bookmarkedPairs.includes(pairId),
             tags: doc.data().tags || ['forex'],
-            lastUpdated: doc.data().lastUpdated || new Date().toISOString()
+            lastUpdated: doc.data().lastUpdated || new Date().toISOString(),
+            confirmationTimeframe: doc.data().confirmationTimeframe || {}
           };
         }) as PairData[];
 
@@ -172,17 +176,6 @@ export default function Screener({ selectedTags, onTagsChange }: ScreenerProps) 
     }
   };
 
-  const getPullbackStatus = (direction: string) => {
-    switch (direction?.toLowerCase()) {
-      case 'up':
-        return styles.indicatorPullbackBar + ' ' + styles.bullish;
-      case 'down':
-        return styles.indicatorPullbackBar + ' ' + styles.bearish;
-      default:
-        return styles.indicatorPullbackBar + ' ' + styles.black;
-    }
-  };
-
   const handleTagToggle = (tag: string) => {
     const newTags = selectedTags.includes(tag)
       ? selectedTags.filter(t => t !== tag)
@@ -244,6 +237,21 @@ export default function Screener({ selectedTags, onTagsChange }: ScreenerProps) 
       }
     });
     return filtered;
+  };
+
+  const getConfirmationStatus = (pair: PairData, timeframe: string) => {
+    const confirmationStatus = pair.confirmationTimeframe?.[timeframe];
+    const direction = pair.directionTimeframe?.[timeframe];
+
+  console.log('>>>> confirmationStatus', confirmationStatus, direction);
+    if (confirmationStatus === "ready") {
+      if (direction === "up") {
+        return styles.indicatorPullbackBar + ' ' + styles.bullish;
+      } else if (direction === "down") {
+        return styles.indicatorPullbackBar + ' ' + styles.bearish;
+      }
+    }
+    return styles.indicatorPullbackBar + ' ' + styles.neutral;
   };
 
   if (loading) {
@@ -349,7 +357,7 @@ export default function Screener({ selectedTags, onTagsChange }: ScreenerProps) 
                       <div key={timeframe} className={styles.timeframeItem}>
                         <span className={styles.timeframeLabel}>{getTimeframeName(timeframe)}</span>
                         <div className={getIndicatorClass(direction)} title={`${timeframe}: ${direction}`} />
-                        <div className={getPullbackStatus(direction)} title={`${timeframe}: ${direction}`} />
+                        <div className={getConfirmationStatus(pair, timeframe)} title={`${timeframe}: ${pair.confirmationTimeframe?.[timeframe]}`} />
                       </div>
                     ))}
                   </div>
