@@ -1,39 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '../../lib/firebase';
 import { collection, doc, getDoc, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
-
-interface WebhookData {
-  pair: string;
-  timeframe: string;
-  timestamp: string;
-  data?: {
-    direction: string;
-    [key: string]: any;
-  };
-}
-
-// for testing only
-// curl -X POST https://fractalizend.vercel.app/api/webhook \
-// -H "Content-Type: application/json" \
-// -d '{
-//   "pair": "testing",
-//   "timeframe": "1H",
-//   "timestamp": "2023-10-25T14:30:45.000Z",
-//   "data": {
-//     "direction": "up"
-//   }
-// }'
-
-// curl -X POST http://localhost:3000/api/webhook \
-// -H "Content-Type: application/json" \
-// -d '{
-//   "pair": "btcusd",
-//   "timeframe": "1m",
-//   "timestamp": "2023-10-25T14:30:45.000Z",
-//   "data": {
-//     "direction": "down"
-//   }
-// }'
+import { sendTelegramNotification } from '../../lib/telegram';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log('🔔 Webhook received:', {
@@ -65,6 +33,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const pairDoc = await getDoc(pairRef);
     console.log('📄 Pair document exists:', pairDoc.exists());
+
+    // Check if direction has changed
+    let shouldNotify = true;
+    if (pairDoc.exists()) {
+      const currentData = pairDoc.data();
+      const previousDirection = currentData.directionTimeframe?.[timeframe];
+      console.log('Previous direction:', previousDirection, 'New direction:', direction);
+      
+      if (previousDirection === direction) {
+        console.log('Direction unchanged, skipping notification');
+        shouldNotify = false;
+      }
+    }
+
+    // Send notification only if direction has changed
+    if (shouldNotify) {
+      const telegramMessage = `
+<b>=========⭐ CONTEXT is CHANGED ⭐=========</b>
+Pair: ${pair}
+Timeframe: ${timeframe}
+Direction: ${direction === "up" ? 'Bullish 🟢' : direction === "down" ? 'Bearish 🔴' : 'Neutral 🟡'}
+
+Timestamp: ${timestamp}
+      `.trim();
+
+      await sendTelegramNotification(telegramMessage);
+      console.log('📢 Sent Telegram notification for direction change');
+    }
 
     // Create or update the pair document
     if (!pairDoc.exists()) {
